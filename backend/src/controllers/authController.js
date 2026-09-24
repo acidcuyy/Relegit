@@ -1,4 +1,6 @@
 import bcrypt from 'bcryptjs'
+import fs from 'fs'
+import path from 'path'
 import { prisma }        from '../lib/prisma.js'
 import { generateToken } from '../middleware/auth.js'
 
@@ -31,7 +33,7 @@ export async function register(req, res) {
         email: email.toLowerCase(),
         password: hashed,
       },
-      select: { id: true, name: true, email: true, role: true, createdAt: true },
+      select: { id: true, name: true, email: true, avatar: true, bio: true, role: true, createdAt: true },
     })
 
     return res.status(201).json({
@@ -72,6 +74,8 @@ export async function login(req, res) {
         id:        user.id,
         name:      user.name,
         email:     user.email,
+        avatar:    user.avatar || null,
+        bio:       user.bio || null,
         role:      user.role,
         createdAt: user.createdAt,
       },
@@ -87,12 +91,85 @@ export async function me(req, res) {
   try {
     const user = await prisma.user.findUnique({
       where: { id: req.user.id },
-      select: { id: true, name: true, email: true, role: true, createdAt: true },
+      select: { id: true, name: true, email: true, avatar: true, bio: true, role: true, createdAt: true },
     })
     if (!user) return res.status(404).json({ message: 'User tidak ditemukan.' })
     return res.json({ user })
   } catch (err) {
     console.error('[me]', err)
     return res.status(500).json({ message: 'Terjadi kesalahan server.' })
+  }
+}
+
+/* ── PUT /api/auth/profile ────────────────────────────────── */
+export async function updateProfile(req, res) {
+  try {
+    const userId = req.user.id
+    const { name, bio, removeAvatar } = req.body
+
+    const currentUser = await prisma.user.findUnique({
+      where: { id: userId },
+    })
+    if (!currentUser) {
+      return res.status(404).json({ message: 'User tidak ditemukan.' })
+    }
+
+    const dataToUpdate = {}
+    if (name && name.trim()) {
+      dataToUpdate.name = name.trim()
+    }
+    if (typeof bio !== 'undefined') {
+      dataToUpdate.bio = bio ? bio.trim() : null
+    }
+
+    // Handle avatar upload
+    if (req.file) {
+      const avatarUrl = `/uploads/${req.file.filename}`
+      dataToUpdate.avatar = avatarUrl
+
+      // Clean up old local avatar file if exists
+      if (currentUser.avatar && currentUser.avatar.startsWith('/uploads/')) {
+        const oldFile = currentUser.avatar.replace('/uploads/', '')
+        const oldPath = path.join(process.cwd(), 'uploads', oldFile)
+        if (fs.existsSync(oldPath)) {
+          try { fs.unlinkSync(oldPath) } catch (_) {}
+        }
+      }
+    } else if (removeAvatar === 'true' || removeAvatar === true) {
+      dataToUpdate.avatar = null
+
+      if (currentUser.avatar && currentUser.avatar.startsWith('/uploads/')) {
+        const oldFile = currentUser.avatar.replace('/uploads/', '')
+        const oldPath = path.join(process.cwd(), 'uploads', oldFile)
+        if (fs.existsSync(oldPath)) {
+          try { fs.unlinkSync(oldPath) } catch (_) {}
+        }
+      }
+    }
+
+    const updatedUser = await prisma.user.update({
+      where: { id: userId },
+      data: dataToUpdate,
+      select: {
+        id:        true,
+        name:      true,
+        email:     true,
+        avatar:    true,
+        bio:       true,
+        role:      true,
+        createdAt: true,
+      },
+    })
+
+    return res.json({
+      message: 'Profil berhasil diperbarui!',
+      user: updatedUser,
+    })
+  } catch (err) {
+    console.error('[updateProfile]', err)
+    if (req.file && fs.existsSync(req.file.path)) {
+      try { fs.unlinkSync(req.file.path) } catch (_) {}
+    }
+    return res.status(500).json({ message: err.message || 'Gagal memperbarui profil.' })
   }
 }

@@ -1,5 +1,5 @@
 import path from 'path'
-import fs   from 'fs'
+import fs from 'fs'
 import { prisma } from '../lib/prisma.js'
 
 /* ────────────────────────────────────────────────────────────
@@ -36,19 +36,19 @@ async function runAIModel(imagePath) {
   // Simulasi delay inference
   await new Promise(r => setTimeout(r, 800 + Math.random() * 1200))
 
-  const verdicts    = ['LEGIT', 'FAKE', 'SUSPICIOUS']
-  const categories  = ['Sneaker', 'Tas', 'Kaos', 'Jaket', 'Celana', 'Hoodie', 'Topi']
-  const brands      = ['Nike', 'Adidas', 'Supreme', 'Off-White', 'Gucci', 'Bape', 'Louis Vuitton']
+  const verdicts = ['LEGIT', 'FAKE', 'SUSPICIOUS']
+  const categories = ['Sneaker', 'Tas', 'Kaos', 'Jaket', 'Celana', 'Hoodie', 'Topi']
+  const brands = ['Nike', 'Adidas', 'Supreme', 'Off-White', 'Gucci', 'Bape', 'Louis Vuitton']
 
-  const verdict    = verdicts[Math.floor(Math.random() * verdicts.length)]
+  const verdict = verdicts[Math.floor(Math.random() * verdicts.length)]
   const confidence = verdict === 'LEGIT'
     ? 0.75 + Math.random() * 0.24
     : verdict === 'FAKE'
-    ? 0.70 + Math.random() * 0.28
-    : 0.45 + Math.random() * 0.25
+      ? 0.70 + Math.random() * 0.28
+      : 0.45 + Math.random() * 0.25
 
   const category = categories[Math.floor(Math.random() * categories.length)]
-  const brand    = brands[Math.floor(Math.random() * brands.length)]
+  const brand = brands[Math.floor(Math.random() * brands.length)]
 
   const LEGIT_POINTS = [
     'Jahitan konsisten dan rapi di seluruh bagian',
@@ -72,14 +72,14 @@ async function runAIModel(imagePath) {
   ]
 
   const allPoints = verdict === 'LEGIT' ? LEGIT_POINTS
-                  : verdict === 'FAKE'   ? FAKE_POINTS
-                  : SUSP_POINTS
+    : verdict === 'FAKE' ? FAKE_POINTS
+      : SUSP_POINTS
 
   const points = allPoints.slice(0, 3 + Math.floor(Math.random() * 2))
 
   const recommendations = {
-    LEGIT:      'Produk ini terdeteksi sebagai original. Aman untuk dibeli atau dijual.',
-    FAKE:       'Produk ini terdeteksi sebagai palsu. Hindari transaksi dan laporkan ke komunitas.',
+    LEGIT: 'Produk ini terdeteksi sebagai original. Aman untuk dibeli atau dijual.',
+    FAKE: 'Produk ini terdeteksi sebagai palsu. Hindari transaksi dan laporkan ke komunitas.',
     SUSPICIOUS: 'Hasil tidak konklusif. Coba upload foto yang lebih jelas atau dari sudut berbeda untuk hasil akurat.',
   }
 
@@ -114,35 +114,35 @@ export async function verifyFashion(req, res) {
     // Save to database
     const verification = await prisma.verification.create({
       data: {
-        userId:         req.user?.id || null,
+        userId: req.user?.id || null,
         imageUrl,
         imageName,
-        verdict:        aiResult.verdict,
-        confidence:     aiResult.confidence,
-        category:       aiResult.category,
-        brand:          aiResult.brand,
-        modelUsed:      aiResult.model || 'EfficientNet-B0',
+        verdict: aiResult.verdict,
+        confidence: aiResult.confidence,
+        category: aiResult.category,
+        brand: aiResult.brand,
+        modelUsed: aiResult.model || 'EfficientNet-B0',
         processingTime: aiResult.processingTime,
-        points:         aiResult.points || [],
+        points: aiResult.points || [],
         recommendation: aiResult.recommendation,
-        rawResult:      aiResult,
+        rawResult: aiResult,
       },
     })
 
     return res.json({
       message: 'Verifikasi berhasil!',
       result: {
-        id:             verification.id,
-        verdict:        verification.verdict,
-        confidence:     verification.confidence,
-        category:       verification.category,
-        brand:          verification.brand,
-        model:          verification.modelUsed,
+        id: verification.id,
+        verdict: verification.verdict,
+        confidence: verification.confidence,
+        category: verification.category,
+        brand: verification.brand,
+        model: verification.modelUsed,
         processingTime: verification.processingTime,
-        points:         verification.points,
+        points: verification.points,
         recommendation: verification.recommendation,
-        imageUrl:       verification.imageUrl,
-        createdAt:      verification.createdAt,
+        imageUrl: verification.imageUrl,
+        createdAt: verification.createdAt,
       },
     })
   } catch (err) {
@@ -157,21 +157,21 @@ export async function verifyFashion(req, res) {
 export async function getHistory(req, res) {
   try {
     const history = await prisma.verification.findMany({
-      where:   { userId: req.user.id },
+      where: { userId: req.user.id },
       orderBy: { createdAt: 'desc' },
-      take:    50,
+      take: 50,
       select: {
-        id:             true,
-        imageUrl:       true,
-        verdict:        true,
-        confidence:     true,
-        category:       true,
-        brand:          true,
-        modelUsed:      true,
+        id: true,
+        imageUrl: true,
+        verdict: true,
+        confidence: true,
+        category: true,
+        brand: true,
+        modelUsed: true,
         processingTime: true,
-        points:         true,
+        points: true,
         recommendation: true,
-        createdAt:      true,
+        createdAt: true,
       },
     })
 

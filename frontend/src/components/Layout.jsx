@@ -3,24 +3,41 @@ import { Link, NavLink, useNavigate } from 'react-router-dom'
 import { Shield, Menu, X, LogOut, User, History, Upload } from 'lucide-react'
 import './Layout.css'
 
+const BACKEND_URL = (import.meta.env.VITE_API_URL || 'http://localhost:5000/api').replace('/api', '')
+
 /* ── Navbar ─────────────────────────────────────────────────── */
 export function Navbar() {
   const [scrolled, setScrolled]   = useState(false)
   const [menuOpen, setMenuOpen]   = useState(false)
+  const [currentUser, setCurrentUser] = useState(() => {
+    return JSON.parse(localStorage.getItem('relegit_user') || 'null')
+  })
   const navigate = useNavigate()
 
   const token = localStorage.getItem('relegit_token')
-  const user  = JSON.parse(localStorage.getItem('relegit_user') || 'null')
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20)
     window.addEventListener('scroll', onScroll)
-    return () => window.removeEventListener('scroll', onScroll)
+
+    const handleUserUpdate = () => {
+      setCurrentUser(JSON.parse(localStorage.getItem('relegit_user') || 'null'))
+    }
+    window.addEventListener('relegit_user_updated', handleUserUpdate)
+    window.addEventListener('storage', handleUserUpdate)
+
+    return () => {
+      window.removeEventListener('scroll', onScroll)
+      window.removeEventListener('relegit_user_updated', handleUserUpdate)
+      window.removeEventListener('storage', handleUserUpdate)
+    }
   }, [])
 
   const handleLogout = () => {
     localStorage.removeItem('relegit_token')
     localStorage.removeItem('relegit_user')
+    setCurrentUser(null)
+    window.dispatchEvent(new Event('relegit_user_updated'))
     navigate('/')
     setMenuOpen(false)
   }
@@ -52,10 +69,19 @@ export function Navbar() {
               <>
                 <div
                   className="navbar-avatar"
-                  title={user?.name || 'Profile'}
+                  title={currentUser?.name || 'Profile'}
                   onClick={() => navigate('/profile')}
+                  style={{ overflow: 'hidden', padding: 0 }}
                 >
-                  {(user?.name?.[0] || 'U').toUpperCase()}
+                  {currentUser?.avatar ? (
+                    <img
+                      src={currentUser.avatar.startsWith('http') || currentUser.avatar.startsWith('data:') ? currentUser.avatar : `${BACKEND_URL}${currentUser.avatar}`}
+                      alt={currentUser.name || 'User'}
+                      style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                    />
+                  ) : (
+                    (currentUser?.name?.[0] || 'U').toUpperCase()
+                  )}
                 </div>
                 <button className="btn btn-secondary" onClick={handleLogout}>
                   <LogOut size={15} /> Logout
@@ -90,7 +116,26 @@ export function Navbar() {
           <li><Link to="/community" onClick={() => setMenuOpen(false)}>👥 Community (V2)</Link></li>
           <li><Link to="/profile" onClick={() => setMenuOpen(false)}>👤 Profile</Link></li>
           {token ? (
-            <li><button onClick={handleLogout} style={{all:'unset',cursor:'pointer',padding:'0.75rem 1rem',display:'block',color:'#f87171'}}>🚪 Logout</button></li>
+            <>
+              <li style={{ padding: '0.75rem 1rem', display: 'flex', alignItems: 'center', gap: '0.75rem', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+                <div style={{ width: 38, height: 38, borderRadius: '50%', overflow: 'hidden', background: 'var(--gradient-purple)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', flexShrink: 0 }}>
+                  {currentUser?.avatar ? (
+                    <img
+                      src={currentUser.avatar.startsWith('http') || currentUser.avatar.startsWith('data:') ? currentUser.avatar : `${BACKEND_URL}${currentUser.avatar}`}
+                      alt="Avatar"
+                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                    />
+                  ) : (
+                    (currentUser?.name?.[0] || 'U').toUpperCase()
+                  )}
+                </div>
+                <div>
+                  <div style={{ fontWeight: 600, fontSize: '0.9rem', color: '#fff' }}>{currentUser?.name || 'User'}</div>
+                  <div style={{ fontSize: '0.75rem', color: 'var(--purple-300)' }}>{currentUser?.email}</div>
+                </div>
+              </li>
+              <li><button onClick={handleLogout} style={{all:'unset',cursor:'pointer',padding:'0.75rem 1rem',display:'block',color:'#f87171',width:'100%'}}>🚪 Logout</button></li>
+            </>
           ) : (
             <>
               <li><Link to="/login" onClick={() => setMenuOpen(false)}>🔑 Login</Link></li>
