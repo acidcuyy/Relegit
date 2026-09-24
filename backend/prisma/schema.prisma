@@ -1,0 +1,63 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ── User ──────────────────────────────────────────────────────
+model User {
+  id        String   @id @default(uuid())
+  name      String
+  email     String   @unique
+  password  String
+  role      Role     @default(USER)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  verifications Verification[]
+
+  @@map("users")
+}
+
+// ── Verification ──────────────────────────────────────────────
+model Verification {
+  id             String   @id @default(uuid())
+  userId         String?
+  imageUrl       String?
+  imageName      String?
+  verdict        Verdict
+  confidence     Float    // 0.0 – 1.0
+  category       String?  // e.g. "Sneaker", "Bag", "Shirt"
+  brand          String?  // detected brand
+  modelUsed      String   @default("EfficientNet-B0")
+  processingTime Int?     // milliseconds
+  points         String[] // array of analysis points
+  recommendation String?
+  rawResult      Json?    // full raw AI model output
+  createdAt      DateTime @default(now())
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([verdict])
+  @@index([createdAt])
+  @@map("verifications")
+}
+
+// ── Enums ─────────────────────────────────────────────────────
+enum Role {
+  USER
+  ADMIN
+}
+
+enum Verdict {
+  LEGIT
+  FAKE
+  SUSPICIOUS
+}
