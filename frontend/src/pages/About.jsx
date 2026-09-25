@@ -124,28 +124,7 @@ export default function AboutPage() {
             </div>
           </div>
 
-          {/* Tech Stack */}
-          <div style={{ marginBottom:'2.5rem' }}>
-            <h2 style={{ fontSize:'1.5rem', fontWeight:800, marginBottom:'1.5rem', display:'flex', alignItems:'center', gap:'0.625rem' }}>
-              <Code2 size={22} style={{ color:'var(--purple-400)' }} /> Tech Stack
-            </h2>
-            <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(220px, 1fr))', gap:'1rem' }}>
-              {[
-                { label:'Frontend',  value:'React + Vite', icon:'⚛️' },
-                { label:'Backend',   value:'Express.js',   icon:'🚀' },
-                { label:'Database',  value:'PostgreSQL',   icon:'🐘' },
-                { label:'ORM',       value:'Prisma',       icon:'🔷' },
-                { label:'AI Model',  value:'EfficientNet-B0', icon:'🧠' },
-                { label:'Platform',  value:'Mobile + Laptop', icon:'📱' },
-              ].map(t => (
-                <div key={t.label} className="glass-card" style={{ padding:'1.25rem' }}>
-                  <p style={{ fontSize:'1.5rem', marginBottom:'0.5rem' }}>{t.icon}</p>
-                  <p style={{ fontSize:'0.75rem', textTransform:'uppercase', letterSpacing:'0.06em', color:'var(--gray-500)', marginBottom:'0.25rem' }}>{t.label}</p>
-                  <p style={{ fontWeight:700 }}>{t.value}</p>
-                </div>
-              ))}
-            </div>
-          </div>
+
 
           {/* CTA */}
           <div style={{ textAlign:'center', padding:'3rem', background:'var(--gradient-card)', border:'1px solid var(--glass-border)', borderRadius:'var(--radius-xl)' }}>

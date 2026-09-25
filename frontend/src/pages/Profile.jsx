@@ -217,6 +217,35 @@ export default function ProfilePage() {
     return `${BACKEND_URL}${avatarPath}`
   }
 
+  const [historyList, setHistoryList] = useState([])
+  const [fetchingHistory, setFetchingHistory] = useState(true)
+
+  // Fetch real user verification history from API
+  useEffect(() => {
+    async function fetchHistory() {
+      if (!token) {
+        setFetchingHistory(false)
+        return
+      }
+      try {
+        const { data } = await axios.get(`${API}/verify/history`, {
+          headers: { Authorization: `Bearer ${token}` }
+        })
+        setHistoryList(data.verifications || [])
+      } catch (err) {
+        console.warn('Failed to fetch history:', err.message)
+      } finally {
+        setFetchingHistory(false)
+      }
+    }
+    fetchHistory()
+  }, [token])
+
+  // Calculate real stats
+  const totalAudits = historyList.length
+  const authenticCount = historyList.filter(item => item.verdict === 'LEGIT').length
+  const fakeCount = historyList.filter(item => item.verdict === 'FAKE').length
+
   return (
     <>
       <Navbar />
@@ -287,7 +316,7 @@ export default function ProfilePage() {
 
                   <p style={{ color: 'var(--purple-300)', fontSize: '0.9rem', marginBottom: '0.6rem' }}>
                     <Mail size={14} style={{ verticalAlign: 'middle', marginRight: '0.4rem' }} />
-                    {user.email}
+                    {user.email || 'Akun Terverifikasi'}
                   </p>
 
                   {user.bio && (
@@ -429,7 +458,7 @@ export default function ProfilePage() {
               </div>
             )}
 
-            {/* User Statistics Grid */}
+            {/* User Real Statistics Grid */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem', marginBottom: '2rem' }}>
               <div style={{
                 background: 'rgba(255,255,255,0.02)',
@@ -438,7 +467,7 @@ export default function ProfilePage() {
                 padding: '1.25rem',
                 textAlign: 'center'
               }}>
-                <p style={{ fontSize: '2rem', fontWeight: 900, color: 'var(--purple-400)' }}>12</p>
+                <p style={{ fontSize: '2rem', fontWeight: 900, color: 'var(--purple-400)' }}>{totalAudits}</p>
                 <p style={{ fontSize: '0.8rem', color: 'var(--gray-400)' }}>Total Audit Fashion</p>
               </div>
 
@@ -449,7 +478,7 @@ export default function ProfilePage() {
                 padding: '1.25rem',
                 textAlign: 'center'
               }}>
-                <p style={{ fontSize: '2rem', fontWeight: 900, color: '#34d399' }}>10</p>
+                <p style={{ fontSize: '2rem', fontWeight: 900, color: '#34d399' }}>{authenticCount}</p>
                 <p style={{ fontSize: '0.8rem', color: 'var(--gray-400)' }}>Item Authentic (Original)</p>
               </div>
 
@@ -460,12 +489,12 @@ export default function ProfilePage() {
                 padding: '1.25rem',
                 textAlign: 'center'
               }}>
-                <p style={{ fontSize: '2rem', fontWeight: 900, color: '#f87171' }}>2</p>
+                <p style={{ fontSize: '2rem', fontWeight: 900, color: '#f87171' }}>{fakeCount}</p>
                 <p style={{ fontSize: '0.8rem', color: 'var(--gray-400)' }}>Terdeteksi Fake</p>
               </div>
             </div>
 
-            {/* User Saved Certificates */}
+            {/* User Real Saved Certificates */}
             <div style={{
               background: 'rgba(255, 255, 255, 0.03)',
               backdropFilter: 'blur(16px)',
@@ -477,25 +506,47 @@ export default function ProfilePage() {
                 <Award size={20} className="text-purple" /> Sertifikat Digital Tersimpan
               </h2>
 
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                <div style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  padding: '1rem 1.25rem',
-                  background: 'rgba(255,255,255,0.02)',
-                  border: '1px solid var(--glass-border)',
-                  borderRadius: 'var(--radius-md)'
-                }}>
-                  <div>
-                    <h4 style={{ fontWeight: 700 }}>Levi's 511 Slim Fit Jeans</h4>
-                    <p style={{ fontSize: '0.75rem', color: 'var(--gray-400)' }}>ID: RLG-2026-5110-LEVI • 92% Authentic</p>
-                  </div>
-                  <Link to="/verify" className="btn btn-secondary" style={{ fontSize: '0.85rem' }}>
-                    <Download size={14} /> View Certificate
+              {fetchingHistory ? (
+                <p style={{ textAlign: 'center', color: 'var(--gray-400)', padding: '1.5rem 0' }}>Memuat data sertifikat...</p>
+              ) : historyList.length === 0 ? (
+                <div style={{ textAlign: 'center', padding: '2rem 1rem', color: 'var(--gray-400)' }}>
+                  <Award size={40} style={{ opacity: 0.3, marginBottom: '0.75rem' }} />
+                  <p style={{ fontWeight: 600, color: 'white', marginBottom: '0.25rem' }}>Belum Ada Sertifikat Tersimpan</p>
+                  <p style={{ fontSize: '0.85rem', marginBottom: '1.25rem' }}>Lakukan verifikasi pertama Anda untuk mendapatkan Sertifikat Keaslian Digital.</p>
+                  <Link to="/verify" className="btn btn-primary" style={{ display: 'inline-flex' }}>
+                    <Upload size={15} /> Mulai Verifikasi Sekarang
                   </Link>
                 </div>
-              </div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                  {historyList.map((item) => (
+                    <div
+                      key={item.id}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        padding: '1rem 1.25rem',
+                        background: 'rgba(255,255,255,0.02)',
+                        border: '1px solid var(--glass-border)',
+                        borderRadius: 'var(--radius-md)',
+                        flexWrap: 'wrap',
+                        gap: '0.75rem'
+                      }}
+                    >
+                      <div>
+                        <h4 style={{ fontWeight: 700 }}>{item.brand || 'Item Fashion'} — {item.category || 'Verified'}</h4>
+                        <p style={{ fontSize: '0.75rem', color: 'var(--gray-400)' }}>
+                          {item.id.slice(0, 8).toUpperCase()} • {Math.round(item.confidence * 100)}% {item.verdict}
+                        </p>
+                      </div>
+                      <Link to="/verify" className="btn btn-secondary" style={{ fontSize: '0.85rem' }}>
+                        <Download size={14} /> Lihat Sertifikat
+                      </Link>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
 
           </div>

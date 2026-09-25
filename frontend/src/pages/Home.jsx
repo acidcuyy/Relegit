@@ -1,63 +1,26 @@
-import { Link } from 'react-router-dom'
-import {
-  Shield, Upload, Zap, Eye, CheckCircle2,
-  Star, ArrowRight, Lock, TrendingUp, Award
-} from 'lucide-react'
-import { Navbar, Footer } from '../components/Layout'
-import './Home.css'
-
-const FEATURES = [
-  {
-    icon: <Zap size={24} />,
-    title: 'Analisis Instan',
-    desc: 'Model AI EfficientNet kami memproses gambar dalam hitungan detik, memberikan hasil verifikasi real-time tanpa menunggu lama.',
-  },
-  {
-    icon: <Eye size={24} />,
-    title: 'Deteksi Detail Mikro',
-    desc: 'Sistem mendeteksi jahitan, logo, material, pola, dan detail kecil yang membedakan barang original dari KW.',
-  },
-  {
-    icon: <Shield size={24} />,
-    title: 'Kepercayaan Tinggi',
-    desc: 'Confidence score transparan dari 0–100% membantu komunitas fashion membuat keputusan pembelian yang tepat.',
-  },
-  {
-    icon: <Lock size={24} />,
-    title: 'Privasi Terjaga',
-    desc: 'Gambar Anda diproses secara aman dan tidak disimpan permanen. Privasi komunitas adalah prioritas kami.',
-  },
-  {
-    icon: <TrendingUp size={24} />,
-    title: 'Terus Belajar',
-    desc: 'Model diperbarui secara berkala dengan data komunitas, sehingga semakin akurat seiring waktu.',
-  },
-  {
-    icon: <Award size={24} />,
-    title: 'Laporan Lengkap',
-    desc: 'Setiap analisis menghasilkan laporan detail: kategori item, merek terdeteksi, poin mencurigakan, dan saran.',
-  },
-]
-
-const STEPS = [
-  {
-    n: '01',
-    title: 'Upload Foto',
-    desc: 'Unggah foto produk fashion yang ingin Anda verifikasi — bisa dari galeri atau kamera langsung.',
-  },
-  {
-    n: '02',
-    title: 'AI Menganalisis',
-    desc: 'Model EfficientNet-B0 kami memindai setiap detail visual dalam milidetik.',
-  },
-  {
-    n: '03',
-    title: 'Terima Hasil',
-    desc: 'Dapatkan verdict LEGIT / FAKE / SUSPICIOUS beserta confidence score dan laporan detail.',
-  },
-]
+import { useState, useEffect } from 'react'
 
 export default function Home() {
+  const [token, setToken] = useState(() => localStorage.getItem('relegit_token'))
+  const [user, setUser]   = useState(() => JSON.parse(localStorage.getItem('relegit_user') || 'null'))
+
+  useEffect(() => {
+    const handleAuthChange = () => {
+      setToken(localStorage.getItem('relegit_token'))
+      setUser(JSON.parse(localStorage.getItem('relegit_user') || 'null'))
+    }
+
+    window.addEventListener('relegit_auth_changed', handleAuthChange)
+    window.addEventListener('relegit_user_updated', handleAuthChange)
+    window.addEventListener('storage', handleAuthChange)
+
+    return () => {
+      window.removeEventListener('relegit_auth_changed', handleAuthChange)
+      window.removeEventListener('relegit_user_updated', handleAuthChange)
+      window.removeEventListener('storage', handleAuthChange)
+    }
+  }, [])
+
   return (
     <>
       <Navbar />
@@ -74,24 +37,48 @@ export default function Home() {
               <Zap size={12} /> AI-Powered Fashion Authentication
             </div>
 
-            <h1 className="hero-title">
-              Verifikasi Keaslian Fashion{' '}
-              <span className="hero-title-gradient">Lebih Cerdas</span>
-            </h1>
+            {token && user ? (
+              <>
+                <h1 className="hero-title">
+                  Selamat Datang Kembali, <br />
+                  <span className="hero-title-gradient">{user.name}</span>
+                </h1>
 
-            <p className="hero-subtitle">
-              Relegit menggunakan kecerdasan buatan untuk mendeteksi keaslian barang fashion
-              secara akurat. Solusi untuk komunitas yang sering bertanya — <em>original atau KW?</em>
-            </p>
+                <p className="hero-subtitle">
+                  Siap melakukan audit keaslian fashion hari ini? Pilih fitur verifikasi interaktif atau cek riwayat sertifikat Anda.
+                </p>
 
-            <div className="hero-actions">
-              <Link to="/verify" className="btn btn-primary" id="hero-cta-verify">
-                <Upload size={16} /> Coba Verifikasi Gratis
-              </Link>
-              <Link to="/about" className="btn btn-secondary" id="hero-cta-about">
-                Pelajari Cara Kerja <ArrowRight size={16} />
-              </Link>
-            </div>
+                <div className="hero-actions">
+                  <Link to="/verify" className="btn btn-primary" id="hero-cta-verify">
+                    <Upload size={16} /> Mulai Verifikasi Baru
+                  </Link>
+                  <Link to="/history" className="btn btn-secondary" id="hero-cta-history">
+                    Lihat Riwayat Audit <ArrowRight size={16} />
+                  </Link>
+                </div>
+              </>
+            ) : (
+              <>
+                <h1 className="hero-title">
+                  Verifikasi Keaslian Fashion{' '}
+                  <span className="hero-title-gradient">Lebih Cerdas</span>
+                </h1>
+
+                <p className="hero-subtitle">
+                  Relegit menggunakan kecerdasan buatan untuk mendeteksi keaslian barang fashion
+                  secara akurat. Solusi untuk komunitas yang sering bertanya — <em>original atau KW?</em>
+                </p>
+
+                <div className="hero-actions">
+                  <Link to="/login" className="btn btn-primary" id="hero-cta-login">
+                    <Upload size={16} /> Masuk & Verifikasi
+                  </Link>
+                  <Link to="/register" className="btn btn-secondary" id="hero-cta-register">
+                    Daftar Akun Gratis <ArrowRight size={16} />
+                  </Link>
+                </div>
+              </>
+            )}
 
             <div className="hero-stats">
               <div className="hero-stat">
@@ -182,22 +169,44 @@ export default function Home() {
         <div className="container">
           <div className="cta-card">
             <div className="badge badge-purple" style={{ margin: '0 auto 1.5rem', display: 'inline-flex' }}>
-              <Star size={11} /> Mulai Gratis Sekarang
+              <Star size={11} /> {token ? 'Dashboard Pengguna' : 'Mulai Gratis Sekarang'}
             </div>
-            <h2 className="cta-title">
-              Hentikan Keraguan.<br />Mulai Verifikasi.
-            </h2>
-            <p className="cta-subtitle">
-              Bergabung dengan ribuan anggota komunitas fashion Indonesia yang sudah menggunakan Relegit.
-            </p>
-            <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap' }}>
-              <Link to="/register" className="btn btn-primary" id="cta-register">
-                Daftar Gratis <ArrowRight size={16} />
-              </Link>
-              <Link to="/verify" className="btn btn-secondary" id="cta-try">
-                <Upload size={16} /> Coba Tanpa Daftar
-              </Link>
-            </div>
+
+            {token ? (
+              <>
+                <h2 className="cta-title">
+                  Siap Melakukan Audit Baru?
+                </h2>
+                <p className="cta-subtitle">
+                  Mulai proses autentikasi produk fashion Anda sekarang atau kelola sertifikat keaslian tersimpan.
+                </p>
+                <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap' }}>
+                  <Link to="/verify" className="btn btn-primary" id="cta-verify">
+                    <Upload size={16} /> Verifikasi Produk Baru
+                  </Link>
+                  <Link to="/profile" className="btn btn-secondary" id="cta-profile">
+                    Lihat Sertifikat Saya <ArrowRight size={16} />
+                  </Link>
+                </div>
+              </>
+            ) : (
+              <>
+                <h2 className="cta-title">
+                  Hentikan Keraguan.<br />Mulai Verifikasi.
+                </h2>
+                <p className="cta-subtitle">
+                  Bergabung dengan ribuan anggota komunitas fashion Indonesia yang sudah menggunakan Relegit.
+                </p>
+                <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap' }}>
+                  <Link to="/register" className="btn btn-primary" id="cta-register">
+                    Daftar Akun Gratis <ArrowRight size={16} />
+                  </Link>
+                  <Link to="/login" className="btn btn-secondary" id="cta-login">
+                    Masuk ke Akun
+                  </Link>
+                </div>
+              </>
+            )}
           </div>
         </div>
       </section>

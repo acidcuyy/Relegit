@@ -38,6 +38,7 @@ export function Navbar() {
     localStorage.removeItem('relegit_user')
     setCurrentUser(null)
     window.dispatchEvent(new Event('relegit_user_updated'))
+    window.dispatchEvent(new Event('relegit_auth_changed'))
     navigate('/')
     setMenuOpen(false)
   }
@@ -156,50 +157,146 @@ export function Navbar() {
 
 /* ── Footer ─────────────────────────────────────────────────── */
 export function Footer() {
+  const [activeModal, setActiveModal] = useState(null) // 'privasi' | 'syarat' | 'kontak' | null
+
   return (
-    <footer className="footer">
-      <div className="container">
-        <div className="footer-grid">
-          <div className="footer-brand">
-            <Link to="/" className="navbar-logo" style={{display:'inline-flex'}}>
-              <span className="navbar-logo-icon"><Shield size={16}/></span>
-              Relegit
-            </Link>
-            <p>Platform autentikasi keaslian fashion berbasis AI. Verifikasi barang fashion Anda secara cepat, akurat, dan terpercaya.</p>
+    <>
+      <footer className="footer">
+        <div className="container">
+          <div className="footer-grid">
+            <div className="footer-brand">
+              <Link to="/" className="navbar-logo" style={{display:'inline-flex'}}>
+                <span className="navbar-logo-icon"><Shield size={16}/></span>
+                Relegit
+              </Link>
+              <p>Platform autentikasi keaslian fashion berbasis AI. Verifikasi barang fashion Anda secara cepat, akurat, dan terpercaya.</p>
+            </div>
+
+            <div>
+              <p className="footer-heading">Fitur</p>
+              <ul className="footer-links">
+                <li><Link to="/verify">AI Verify</Link></li>
+                <li><Link to="/history">Riwayat</Link></li>
+                <li><Link to="/about">Cara Kerja</Link></li>
+              </ul>
+            </div>
+
+            <div>
+              <p className="footer-heading">Akun</p>
+              <ul className="footer-links">
+                <li><Link to="/login">Login</Link></li>
+                <li><Link to="/register">Daftar</Link></li>
+              </ul>
+            </div>
+
+            <div>
+              <p className="footer-heading">Legal & Kontak</p>
+              <ul className="footer-links">
+                <li>
+                  <button onClick={() => setActiveModal('privasi')} style={{ all: 'unset', cursor: 'pointer' }}>
+                    Privasi
+                  </button>
+                </li>
+                <li>
+                  <button onClick={() => setActiveModal('syarat')} style={{ all: 'unset', cursor: 'pointer' }}>
+                    Syarat & Ketentuan
+                  </button>
+                </li>
+                <li>
+                  <button onClick={() => setActiveModal('kontak')} style={{ all: 'unset', cursor: 'pointer' }}>
+                    Kontak Kami
+                  </button>
+                </li>
+              </ul>
+            </div>
           </div>
 
-          <div>
-            <p className="footer-heading">Fitur</p>
-            <ul className="footer-links">
-              <li><Link to="/verify">AI Verify</Link></li>
-              <li><Link to="/history">Riwayat</Link></li>
-              <li><Link to="/about">Cara Kerja</Link></li>
-            </ul>
-          </div>
-
-          <div>
-            <p className="footer-heading">Akun</p>
-            <ul className="footer-links">
-              <li><Link to="/login">Login</Link></li>
-              <li><Link to="/register">Daftar</Link></li>
-            </ul>
-          </div>
-
-          <div>
-            <p className="footer-heading">Legal</p>
-            <ul className="footer-links">
-              <li><Link to="#">Privasi</Link></li>
-              <li><Link to="#">Syarat</Link></li>
-              <li><Link to="#">Kontak</Link></li>
-            </ul>
+          <div className="footer-bottom">
+            <p>© 2026 Relegit. All rights reserved.</p>
+            <p>Dibangun untuk komunitas fashion Indonesia 🇮🇩</p>
           </div>
         </div>
+      </footer>
 
-        <div className="footer-bottom">
-          <p>© 2026 Relegit. All rights reserved.</p>
-          <p>Dibangun untuk komunitas fashion Indonesia 🇮🇩</p>
+      {/* Interactive Legal Modals */}
+      {activeModal && (
+        <div style={{
+          position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(8px)',
+          zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem'
+        }}>
+          <div style={{
+            background: 'var(--bg-card)', border: '1px solid var(--glass-border)', borderRadius: 'var(--radius-xl)',
+            padding: '2rem', maxWidth: '600px', width: '100%', maxHeight: '85vh', overflowY: 'auto', position: 'relative'
+          }}>
+            <button
+              onClick={() => setActiveModal(null)}
+              style={{
+                position: 'absolute', top: '1.25rem', right: '1.25rem', background: 'rgba(255,255,255,0.1)',
+                border: 'none', borderRadius: '50%', width: 32, height: 32, color: 'white', cursor: 'pointer',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.25rem'
+              }}
+            >
+              ×
+            </button>
+
+            {activeModal === 'privasi' && (
+              <div>
+                <h3 style={{ fontSize: '1.4rem', fontWeight: 800, marginBottom: '1rem', color: 'var(--purple-300)' }}>
+                  🔒 Kebijakan Privasi Relegit
+                </h3>
+                <p style={{ color: 'var(--gray-300)', lineHeight: 1.7, fontSize: '0.925rem', marginBottom: '1rem' }}>
+                  Relegit berkomitmen penuh untuk melindungi kerahasiaan dan privasi data pengguna. Semua foto fashion yang diunggah hanya digunakan untuk keperluan analisis AI dan audit autentikasi keaslian barang.
+                </p>
+                <ul style={{ color: 'var(--gray-300)', lineHeight: 1.7, fontSize: '0.9rem', paddingLeft: '1.25rem', marginBottom: '1rem' }}>
+                  <li>Foto Anda disimpan dengan enkripsi aman di server kami.</li>
+                  <li>Data pribadi pengguna tidak akan dijual atau dibagikan ke pihak ketiga.</li>
+                  <li>Anda berhak menghapus riwayat verifikasi dan akun Anda kapan saja.</li>
+                </ul>
+              </div>
+            )}
+
+            {activeModal === 'syarat' && (
+              <div>
+                <h3 style={{ fontSize: '1.4rem', fontWeight: 800, marginBottom: '1rem', color: 'var(--purple-300)' }}>
+                  📜 Syarat & Ketentuan Layanan
+                </h3>
+                <p style={{ color: 'var(--gray-300)', lineHeight: 1.7, fontSize: '0.925rem', marginBottom: '1rem' }}>
+                  Dengan menggunakan platform Relegit, Anda menyetujui syarat dan ketentuan berikut:
+                </p>
+                <ul style={{ color: 'var(--gray-300)', lineHeight: 1.7, fontSize: '0.9rem', paddingLeft: '1.25rem', marginBottom: '1rem' }}>
+                  <li>Hasil verifikasi berbasis analisis AI dan dirancang sebagai alat bantu pendukung autentikasi.</li>
+                  <li>Dilarang mengunggah gambar yang melanggar hukum, konten terlarang, atau bukan produk fashion.</li>
+                  <li>Sertifikat digital Relegit diterbitkan secara sah untuk tiap audit yang berhasil diselesaikan.</li>
+                </ul>
+              </div>
+            )}
+
+            {activeModal === 'kontak' && (
+              <div>
+                <h3 style={{ fontSize: '1.4rem', fontWeight: 800, marginBottom: '1rem', color: 'var(--purple-300)' }}>
+                  💬 Hubungi Kami
+                </h3>
+                <p style={{ color: 'var(--gray-300)', lineHeight: 1.7, fontSize: '0.925rem', marginBottom: '1.25rem' }}>
+                  Ada pertanyaan, kendala, atau masukan untuk pengembangan platform Relegit? Tim kami siap membantu!
+                </p>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.875rem', background: 'rgba(255,255,255,0.03)', padding: '1.25rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--glass-border)' }}>
+                  <p style={{ fontSize: '0.9rem' }}>📧 <strong>Email Support:</strong> support@relegit.com</p>
+                  <p style={{ fontSize: '0.9rem' }}>📱 <strong>WhatsApp Community:</strong> +62 812-3456-7890</p>
+                  <p style={{ fontSize: '0.9rem' }}>⏰ <strong>Jam Operasional:</strong> Senin – Minggu (08.00 – 22.00 WIB)</p>
+                </div>
+              </div>
+            )}
+
+            <button
+              className="btn btn-primary mt-4"
+              onClick={() => setActiveModal(null)}
+              style={{ width: '100%', justifyContent: 'center' }}
+            >
+              Tutup
+            </button>
+          </div>
         </div>
-      </div>
-    </footer>
+      )}
+    </>
   )
 }

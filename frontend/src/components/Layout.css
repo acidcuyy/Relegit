@@ -219,3 +219,11 @@
   .footer-brand { grid-column: 1 / -1; }
   .footer-bottom { flex-direction: column; gap: 0.5rem; text-align: center; }
 }
+
+@media (max-width: 480px) {
+  .footer-grid { grid-template-columns: 1fr; gap: 1.5rem; }
+  .footer-brand p { max-width: 100%; }
+  .mobile-menu { width: 100%; max-width: 300px; }
+  .navbar-logo { font-size: 1.25rem; }
+  .navbar-logo-icon { width: 32px; height: 32px; }
+}

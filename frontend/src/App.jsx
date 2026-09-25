@@ -19,18 +19,14 @@ export default function App() {
         <Route path="/"          element={<Home />} />
         <Route path="/login"     element={<LoginPage />} />
         <Route path="/register"  element={<RegisterPage />} />
-        <Route path="/verify"    element={<VerifyPage />} />
-        <Route path="/community" element={<CommunityPage />} />
-        <Route path="/profile"   element={<ProfilePage />} />
         <Route path="/about"     element={<AboutPage />} />
-        <Route
-          path="/history"
-          element={
-            <PrivateRoute>
-              <HistoryPage />
-            </PrivateRoute>
-          }
-        />
+
+        {/* Protected Routes — Requires Login */}
+        <Route path="/verify"    element={<PrivateRoute><VerifyPage /></PrivateRoute>} />
+        <Route path="/community" element={<PrivateRoute><CommunityPage /></PrivateRoute>} />
+        <Route path="/profile"   element={<PrivateRoute><ProfilePage /></PrivateRoute>} />
+        <Route path="/history"   element={<PrivateRoute><HistoryPage /></PrivateRoute>} />
+
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>

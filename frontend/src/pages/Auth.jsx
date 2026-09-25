@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { Shield, Eye, EyeOff, Mail, Lock, AlertCircle, CheckCircle2 } from 'lucide-react'
+import { Shield, Eye, EyeOff, User, Mail, Lock, AlertCircle, CheckCircle2 } from 'lucide-react'
 import axios from 'axios'
 import './Auth.css'
 
@@ -9,7 +9,7 @@ const API = import.meta.env.VITE_API_URL || 'http://localhost:5000/api'
 /* ── Login Page ──────────────────────────────────────────────── */
 export function LoginPage() {
   const navigate = useNavigate()
-  const [form, setForm]       = useState({ email: '', password: '' })
+  const [form, setForm]       = useState({ username: '', password: '' })
   const [showPw, setShowPw]   = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError]     = useState('')
@@ -21,15 +21,17 @@ export function LoginPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    if (!form.email || !form.password) { setError('Semua kolom wajib diisi.'); return }
+    if (!form.username || !form.password) { setError('Username dan password wajib diisi.'); return }
     setLoading(true)
     try {
       const { data } = await axios.post(`${API}/auth/login`, form)
       localStorage.setItem('relegit_token', data.token)
       localStorage.setItem('relegit_user',  JSON.stringify(data.user))
+      window.dispatchEvent(new Event('relegit_auth_changed'))
+      window.dispatchEvent(new Event('relegit_user_updated'))
       navigate('/verify')
     } catch (err) {
-      setError(err.response?.data?.message || 'Login gagal. Periksa kembali email & password.')
+      setError(err.response?.data?.message || 'Login gagal. Periksa kembali username & password.')
     } finally {
       setLoading(false)
     }
@@ -59,19 +61,19 @@ export function LoginPage() {
 
         <form className="auth-form" onSubmit={handleSubmit} noValidate>
           <div className="form-group">
-            <label className="form-label" htmlFor="login-email">Email</label>
+            <label className="form-label" htmlFor="login-username">Username</label>
             <div style={{ position: 'relative' }}>
-              <Mail size={16} style={{ position: 'absolute', left: '0.875rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--gray-500)' }} />
+              <User size={16} style={{ position: 'absolute', left: '0.875rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--gray-500)' }} />
               <input
-                id="login-email"
+                id="login-username"
                 className="form-input"
                 style={{ paddingLeft: '2.5rem' }}
-                type="email"
-                name="email"
-                placeholder="email@contoh.com"
-                value={form.email}
+                type="text"
+                name="username"
+                placeholder="Username Anda"
+                value={form.username}
                 onChange={onChange}
-                autoComplete="email"
+                autoComplete="username"
               />
             </div>
           </div>
@@ -123,7 +125,7 @@ export function LoginPage() {
 /* ── Register Page ───────────────────────────────────────────── */
 export function RegisterPage() {
   const navigate = useNavigate()
-  const [form, setForm]       = useState({ name: '', email: '', password: '', confirmPassword: '' })
+  const [form, setForm]       = useState({ name: '', username: '', email: '', password: '', confirmPassword: '' })
   const [showPw, setShowPw]   = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError]     = useState('')
@@ -136,8 +138,16 @@ export function RegisterPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    if (!form.name || !form.email || !form.password || !form.confirmPassword) {
-      setError('Semua kolom wajib diisi.')
+    if (!form.name || !form.username || !form.email || !form.password || !form.confirmPassword) {
+      setError('Semua kolom (Nama, Username, Email, Password) wajib diisi.')
+      return
+    }
+    if (form.username.length < 3) {
+      setError('Username minimal 3 karakter.')
+      return
+    }
+    if (!form.email.includes('@')) {
+      setError('Format email tidak valid.')
       return
     }
     if (form.password !== form.confirmPassword) {
@@ -152,6 +162,7 @@ export function RegisterPage() {
     try {
       await axios.post(`${API}/auth/register`, {
         name: form.name,
+        username: form.username,
         email: form.email,
         password: form.password,
       })
@@ -200,11 +211,29 @@ export function RegisterPage() {
               className="form-input"
               type="text"
               name="name"
-              placeholder="Nama Anda"
+              placeholder="Nama Lengkap Anda"
               value={form.name}
               onChange={onChange}
               autoComplete="name"
             />
+          </div>
+
+          <div className="form-group">
+            <label className="form-label" htmlFor="reg-username">Username (Untuk Login)</label>
+            <div style={{ position: 'relative' }}>
+              <User size={16} style={{ position: 'absolute', left: '0.875rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--gray-500)' }} />
+              <input
+                id="reg-username"
+                className="form-input"
+                style={{ paddingLeft: '2.5rem' }}
+                type="text"
+                name="username"
+                placeholder="Pilih username unik"
+                value={form.username}
+                onChange={onChange}
+                autoComplete="username"
+              />
+            </div>
           </div>
 
           <div className="form-group">

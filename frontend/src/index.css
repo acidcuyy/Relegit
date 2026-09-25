@@ -324,8 +324,31 @@ input, textarea {
   transition: width 1s cubic-bezier(0.16,1,0.3,1);
 }
 
+/* Heading typography rules for clean mobile rendering */
+h1, h2, h3, h4, h5, h6 {
+  line-height: 1.35;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  hyphens: auto;
+}
+
+p, span, li, button, input, textarea {
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
+  html { font-size: 15px; }
   .section { padding: 3rem 0; }
+  .container { padding: 0 1.25rem; }
+}
+
+@media (max-width: 480px) {
+  html { font-size: 14px; }
   .container { padding: 0 1rem; }
+  .btn {
+    padding: 0.625rem 1rem;
+    font-size: 0.875rem;
+  }
 }
