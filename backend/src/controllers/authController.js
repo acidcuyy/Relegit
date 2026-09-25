@@ -7,20 +7,25 @@ import { generateToken } from '../middleware/auth.js'
 /* ── POST /api/auth/register ─────────────────────────────── */
 export async function register(req, res) {
   try {
-    const { name, email, password } = req.body
+    const { name, username, email, password } = req.body
 
     // Validation
-    if (!name || !email || !password) {
-      return res.status(400).json({ message: 'Nama, email, dan password wajib diisi.' })
+    if (!name || !username || !password) {
+      return res.status(400).json({ message: 'Nama lengkap, username, dan password wajib diisi.' })
     }
-    if (password.length < 8) {
-      return res.status(400).json({ message: 'Password minimal 8 karakter.' })
+    const cleanUsername = username.trim().toLowerCase()
+    const cleanEmail = email.trim().toLowerCase()
+
+    // Check existing username
+    const existingUser = await prisma.user.findUnique({ where: { username: cleanUsername } })
+    if (existingUser) {
+      return res.status(409).json({ message: 'Username sudah digunakan, silakan pilih username lain.' })
     }
 
-    // Check existing
-    const existing = await prisma.user.findUnique({ where: { email: email.toLowerCase() } })
-    if (existing) {
-      return res.status(409).json({ message: 'Email sudah terdaftar.' })
+    // Check existing email
+    const existingEmail = await prisma.user.findFirst({ where: { email: cleanEmail } })
+    if (existingEmail) {
+      return res.status(409).json({ message: 'Email sudah terdaftar. Silakan gunakan email lain atau login.' })
     }
 
     // Hash password
@@ -30,10 +35,11 @@ export async function register(req, res) {
     const user = await prisma.user.create({
       data: {
         name,
-        email: email.toLowerCase(),
+        username: cleanUsername,
+        email: email ? email.toLowerCase().trim() : null,
         password: hashed,
       },
-      select: { id: true, name: true, email: true, avatar: true, bio: true, role: true, createdAt: true },
+      select: { id: true, name: true, username: true, email: true, avatar: true, bio: true, role: true, createdAt: true },
     })
 
     return res.status(201).json({
@@ -49,23 +55,24 @@ export async function register(req, res) {
 /* ── POST /api/auth/login ────────────────────────────────── */
 export async function login(req, res) {
   try {
-    const { email, password } = req.body
+    const { username, password } = req.body
 
-    if (!email || !password) {
-      return res.status(400).json({ message: 'Email dan password wajib diisi.' })
+    if (!username || !password) {
+      return res.status(400).json({ message: 'Username dan password wajib diisi.' })
     }
 
-    const user = await prisma.user.findUnique({ where: { email: email.toLowerCase() } })
+    const cleanUsername = username.trim().toLowerCase()
+    const user = await prisma.user.findUnique({ where: { username: cleanUsername } })
     if (!user) {
-      return res.status(401).json({ message: 'Email atau password salah.' })
+      return res.status(401).json({ message: 'Username atau password salah.' })
     }
 
     const match = await bcrypt.compare(password, user.password)
     if (!match) {
-      return res.status(401).json({ message: 'Email atau password salah.' })
+      return res.status(401).json({ message: 'Username atau password salah.' })
     }
 
-    const token = generateToken({ id: user.id, email: user.email, role: user.role })
+    const token = generateToken({ id: user.id, username: user.username, role: user.role })
 
     return res.json({
       message: 'Login berhasil!',
@@ -73,6 +80,7 @@ export async function login(req, res) {
       user: {
         id:        user.id,
         name:      user.name,
+        username:  user.username,
         email:     user.email,
         avatar:    user.avatar || null,
         bio:       user.bio || null,
